@@ -2,14 +2,20 @@
 
 namespace Rubricate\Env;
 
+use InvalidArgumentException;
+use RuntimeException;
+
 class DotEnv
 {
+    private const COMMENT_PREFIX = '#';
+    private const VARIABLE_DELIMITER = '=';
+
     protected $isFile = false;
 
     public function __construct(string $file)
     {
         if (!file_exists($file)) {
-            throw new \InvalidArgumentException(".env file not found: {$file}");
+            throw new InvalidArgumentException(".env file not found: {$file}");
         }
 
         $this->prepareFile($file);
@@ -21,16 +27,13 @@ class DotEnv
 
         foreach ($lines as $line) {
 
-            if ($this->isNotComment($line)) {
-                continue;
+            if ($this->isComment($line) || $this->isDelimiter($line)) {
+                return;
             }
 
-            [$key, $value] = explode('=', $line, 2);
+            [$key, $value] = array_map('trim', explode(self::VARIABLE_DELIMITER, $line, 2));
 
-            $key = trim($key);
-            $value = $this->sanitizeValue($value);
-
-            $this->setEnvironmentVariable($key, $value);
+            $this->setEnvironmentVariable($key, $this->sanitizeValue($value));
         }
 
         $this->isFile = true;
@@ -41,10 +44,10 @@ class DotEnv
         return trim($value, " \t\n\r\0\x0B\"'");
     }
 
-    public function get(string $key, $default = null)
+    public function get(string $key, $default = null): ?string
     {
         $value = getenv($key);
-        return $value !== false ? $value : $default;
+        return ($value !== false)? $value: $default;
     }
 
     public function required(array $keys): void
@@ -52,22 +55,32 @@ class DotEnv
         foreach ($keys as $key) {
             if ($this->get($key) === null) {
 
-                throw new \RuntimeException(
+                throw new RuntimeException(
                     "The required environment variable {$key} is not set."
                 );
             }
         }
     }
 
-    private function isNotComment($line)
+    private function isComment($line): bool
     {
-       return (strpos(trim($line), '#') === 0 || strpos($line, '=') === false);
-    } 
+        return (
+            strpos(trim($line), self::COMMENT_PREFIX) === 0
+        );
+    }
 
-    private function setEnvironmentVariable($k, $v)
+    private function isDelimiter($line): bool
+    {
+        return (
+            strpos($line, self::VARIABLE_DELIMITER) === false
+        );
+    }
+
+    private function setEnvironmentVariable($k, $v): void
     {
         putenv("$k=$v");
         $_ENV[$k] = $v;
         $_SERVER[$k] = $v;
-    } 
+    }
 }
+
