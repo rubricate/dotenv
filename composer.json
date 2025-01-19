@@ -1,0 +1,30 @@
+{
+    "name": "rubricate/dotenv",
+    "license": "MIT",
+    "description": "PHP component to load dotenv file",
+    "authors": [
+        {
+            "name": "Estefanio N Santos",
+            "email": "estefanions@gmail.com"
+        }
+    ],
+    "keywords": [
+        "rubricatephp",
+        "dotenv"
+    ],
+    "support": {
+        "docs"   : "https://rubricate.github.io/components/dotenv",
+        "source" : "https://github.com/rubricate/dotenv"
+    },
+    "require": {
+        "php": ">=7.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rubricate\\Env\\": "Rubricate/Env/"
+        }
+
+    }
+
+}
+
