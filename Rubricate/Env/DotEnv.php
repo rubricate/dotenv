@@ -55,7 +55,23 @@ class DotEnv
 
     public function get(string $key, ?string $default = null): ?string
     {
-        return getenv($key)?: $default;
+        if (isset($_ENV[$key])) {
+            return (string) $_ENV[$key];
+        }
+
+        if (isset($_SERVER[$key])) {
+            return (string) $_SERVER[$key];
+        }
+
+        if (function_exists('getenv')) {
+            $val = getenv($key);
+
+            if ($val !== false) {
+                return $val;
+            }
+        }
+
+        return $default;
     }
 
     public function required(array $keys): void
@@ -80,7 +96,10 @@ class DotEnv
 
     private function setEnvironmentVariable($k, $v): void
     {
-        putenv("$k=$v");
+        if (function_exists('putenv')) {
+            putenv("$k=$v");
+        }
+
         $_ENV[$k] = $v;
         $_SERVER[$k] = $v;
     }
